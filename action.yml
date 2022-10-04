@@ -31,6 +31,35 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Update release description
+      if: ${{ github.event_name == 'release' }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+      shell: bash
+      run: |
+        TYPE="$(git for-each-ref --format "%(objecttype)" ${GITHUB_REF})"
+        CURRENT="$(gh release view ${GITHUB_REF_NAME} --json body -t "{{.body}}")"
+        if [[ -z "${CURRENT}" && "${TYPE}" == "tag" ]]; then
+          DESC=$(git tag -l -n99 --format "%(contents)" ${GITHUB_REF_NAME})
+          gh release edit -n "${DESC}"
+        fi
+
+    - name: Add release tag annotation
+      if: ${{ github.event_name == 'release' }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+      shell: bash
+      run: |
+        TYPE="$(git for-each-ref --format "%(objecttype)" ${GITHUB_REF})"
+        DESC="$(gh release view ${GITHUB_REF_NAME} --json body -t "{{.body}}")"
+        if [[ -n "${DESC}" && "${TYPE}" == "commit" ]]; then
+          export GIT_COMMITTER_NAME="$(git tag -l --format "%(committername)" ${GITHUB_REF_NAME})"
+          export GIT_COMMITTER_EMAIL="$(git tag -l --format "%(committeremail)" ${GITHUB_REF_NAME})"
+          export GIT_COMMITTER_DATE="$(gh release view ${GITHUB_REF_NAME} --json publishedAt -t "{{.publishedAt}}")"
+          git tag ${GITHUB_REF_NAME} ${GITHUB_REF_NAME}^{} -f -a -m "${DESC}"
+          git push --force origin ${GITHUB_REF_NAME}:${GITHUB_REF_NAME}
+        fi
+
     - name: Install packages
       shell: bash
       run: |
@@ -118,18 +147,6 @@ runs:
         file: ${{ inputs.gen-pack-output }}/*.pack
         tag: ${{ github.ref }}
         overwrite: true
-
-    - name: Update release description
-      if: ${{ github.event_name == 'release' }}
-      env:
-        GH_TOKEN: ${{ github.token }}
-      shell: bash
-      run: |
-        CURRENT="$(gh release view ${GITHUB_REF_NAME} --json body -t "{{.body}}")"
-        if [[ -z "$CURRENT" ]]; then
-          DESC=$(git tag -l -n99 --format "%(contents)" ${GITHUB_REF_NAME})
-          gh release edit -n "${DESC}"
-        fi
 
     - uses: actions/checkout@v3
       if: ${{ inputs.gh-pages-branch && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
