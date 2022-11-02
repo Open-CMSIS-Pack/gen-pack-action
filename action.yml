@@ -171,7 +171,7 @@ runs:
         else
           MSG="branch"
         fi
-        test -x update_versions.sh && ./update_versions.sh
+        ${{ github.action_path }}/publish-doc/update_versions.sh
         git config user.name github-actions
         git config user.email github-actions@github.com
         git add .
