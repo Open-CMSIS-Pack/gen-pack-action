@@ -5,6 +5,10 @@ inputs:
     description: 'Version of Doxygen'
     required: false
     default: 1.9.2
+  doxygen-url:
+    description: 'Download URL for Doxygen'
+    required: false
+    default: 'https://sourceforge.net/projects/doxygen/files/rel-{VERSION}/doxygen-{VERSION}.linux.bin.tar.gz/download'
   packchk-version:
     description: 'Version of PackChk'
     required: false
@@ -70,8 +74,8 @@ runs:
     - name: Install doxygen ${{ inputs.doxygen-version }}
       shell: bash
       run: |
-        wget https://doxygen.nl/files/doxygen-${{ inputs.doxygen-version }}.linux.bin.tar.gz
-        sudo tar -C /opt -xf doxygen-${{ inputs.doxygen-version }}.linux.bin.tar.gz
+        wget -O doxygen.tgz $(sed -e 's/{VERSION}/${{ inputs.doxygen-version }}/g' <<< ${{ inputs.doxygen-url }})
+        sudo tar -C /opt -xf doxygen.tgz
         sudo ln -s /opt/doxygen-${{ inputs.doxygen-version }}/bin/doxygen /usr/local/bin/
         which doxygen
         doxygen --version

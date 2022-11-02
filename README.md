@@ -13,7 +13,7 @@ and pack archives:
 6. Archives the generated pack if the output folder is provided.
 7. Publishes the documentation to GH-Pages if documentation path and branch are provided.
 
-# Usage 
+# Usage
 
 ```yaml
 - uses: Open-CMSIS-Pack/gen-pack-action@main
@@ -27,3 +27,12 @@ and pack archives:
     gen-pack-output: ./output                               # skipped by default
     gh-pages-branch: gh-pages                               # default
 ```
+
+## Advanced usage
+
+### Doxygen download
+
+The URL Doxygen is downloaded from can be overwritten with the action input parameter
+`doxygen-url` which defaults to
+`https://sourceforge.net/projects/doxygen/files/rel-{VERSION}/doxygen-{VERSION}.linux.bin.tar.gz/download`.
+The `{VERSION}` pattern is substituted with the value provided in `doxygen-version`.
