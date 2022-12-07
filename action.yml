@@ -45,7 +45,7 @@ runs:
         CURRENT="$(gh release view ${GITHUB_REF_NAME} --json body -t "{{.body}}")"
         if [[ -z "${CURRENT}" && "${TYPE}" == "tag" ]]; then
           DESC=$(git tag -l -n99 --format "%(contents)" ${GITHUB_REF_NAME})
-          gh release edit -n "${DESC}"
+          gh release edit ${GITHUB_REF_NAME} -n "${DESC}"
         fi
 
     - name: Add release tag annotation
