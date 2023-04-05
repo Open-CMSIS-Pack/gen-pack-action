@@ -5,10 +5,11 @@
       "severity": "warning",
       "pattern": [
         {
-          "regexp": "^\\*\\*\\* WARNING M(\\d+): (.*) \\(Line (\\d+)\\)",
-          "file": 2,
-          "line": 3,
-          "code": 1
+          "regexp": "^\\*\\*\\* (INFO|WARNING|ERROR) M(\\d+): (.*) \\(Line (\\d+)\\)",
+          "severity": 1,
+          "file": 3,
+          "line": 4,
+          "code": 2
         },
         {
           "regexp": "^  (.+)",
