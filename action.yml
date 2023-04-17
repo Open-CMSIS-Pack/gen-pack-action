@@ -71,8 +71,16 @@ runs:
         sudo apt-get install --no-install-recommends -y libclang1-9 libclang-cpp1-9 p7zip libxml2-utils
         sudo pip install LinkChecker
 
-    - name: Install doxygen ${{ inputs.doxygen-version }}
+    - name: Cache Doxygen ${{ inputs.doxygen-version }}
       if: inputs.doxygen-version != 'none'
+      id: cache-doxygen
+      uses: actions/cache@v3
+      with:
+        path: /opt/doxygen-${{ inputs.doxygen-version }}
+        key: doxygen-${{ inputs.doxygen-version }}-${{ runner.os }}
+
+    - name: Install Doxygen ${{ inputs.doxygen-version }}
+      if: inputs.doxygen-version != 'none' && steps.cache-doxygen.outputs.cache-hit != 'true'
       shell: bash
       run: |
         wget -O doxygen.tgz $(sed -e 's/{VERSION}/${{ inputs.doxygen-version }}/g' <<< ${{ inputs.doxygen-url }})
