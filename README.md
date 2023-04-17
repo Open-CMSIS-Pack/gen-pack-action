@@ -32,7 +32,17 @@ and pack archives:
 
 ### Doxygen download
 
+If Doxygen is not required one can skip download and installation by setting `doxygen-version: none`.
+
 The URL Doxygen is downloaded from can be overwritten with the action input parameter
 `doxygen-url` which defaults to
 `https://sourceforge.net/projects/doxygen/files/rel-{VERSION}/doxygen-{VERSION}.linux.bin.tar.gz/download`.
 The `{VERSION}` pattern is substituted with the value provided in `doxygen-version`.
+
+### Publish to GitHub Pages
+
+Publishing documentation to GitHub Pages is handled automatically via the settings
+
+- `gen-doc-script` for generating if required, leave empty to skip generation.
+- `doc-path` for archiving documentation, leave empty to skip archiving/publishing.
+- `gh-pages` for publishing to GitHub Pages, set to empty to skip publishing.
