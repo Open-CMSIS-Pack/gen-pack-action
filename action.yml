@@ -79,12 +79,17 @@ runs:
         path: /opt/doxygen-${{ inputs.doxygen-version }}
         key: doxygen-${{ inputs.doxygen-version }}-${{ runner.os }}
 
-    - name: Install Doxygen ${{ inputs.doxygen-version }}
+    - name: Download Doxygen ${{ inputs.doxygen-version }}
       if: inputs.doxygen-version != 'none' && steps.cache-doxygen.outputs.cache-hit != 'true'
       shell: bash
       run: |
         wget -O doxygen.tgz $(sed -e 's/{VERSION}/${{ inputs.doxygen-version }}/g' <<< ${{ inputs.doxygen-url }})
         sudo tar -C /opt -xf doxygen.tgz
+
+    - name: Install Doxygen ${{ inputs.doxygen-version }}
+      if: inputs.doxygen-version != 'none'
+      shell: bash
+      run: |
         sudo ln -s /opt/doxygen-${{ inputs.doxygen-version }}/bin/doxygen /usr/local/bin/
         which doxygen
         doxygen --version
