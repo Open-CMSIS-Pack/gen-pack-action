@@ -13,7 +13,7 @@ and pack archives:
 6. Archives the generated pack if the output folder is provided.
 7. Publishes the documentation to GH-Pages if documentation path and branch are provided.
 
-# Usage
+## Usage
 
 ```yaml
 - uses: Open-CMSIS-Pack/gen-pack-action@main
@@ -27,6 +27,15 @@ and pack archives:
     gen-pack-output: ./output                               # skipped by default
     gh-pages-branch: gh-pages                               # default
 ```
+
+> **Attention for Windows users**
+>
+> On Windows Bash scripts are executable without special handling. This
+> does not hold true once moving the files to a Linux machine. To assure
+> the eXecute permission gets set on Linux, run the following Git command
+> on the Windows machine and commit the change:
+>
+> `git update-index --chmod=+x <script>`
 
 ## Advanced usage
 
