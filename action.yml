@@ -32,6 +32,11 @@ inputs:
     description: 'Branch used for gh-pages deployment'
     required: false
     default: gh-pages
+  gh-pages-deploy:
+    description: 'Workflow used for gh-pages deployment'
+    required: false
+    default: gh-pages.yml
+
 runs:
   using: "composite"
   steps:
@@ -214,3 +219,14 @@ runs:
       if: inputs.doc-path && inputs.gh-pages-branch && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
       with:
         ref: ${{ github.ref }}
+
+    - name: Trigger GH-Pages deployment
+      if: inputs.doc-path && inputs.gh-pages-branch && inputs.gh-pages-deploy && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh workflow run ${{ inputs.gh-pages-deploy }} --ref ${{ inputs.gh-pages-branch }}
+        if [ $? -ne 0 ]; then
+          echo "::notice::Failed to trigger GH-Pages deployment via workflow '${{ inputs.gh-pages-deploy }}'. Configure workflow via 'gh-pages-deploy' input parameter, set empty to disable."
+        fi
