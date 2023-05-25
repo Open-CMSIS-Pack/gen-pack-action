@@ -12,7 +12,7 @@ inputs:
   packchk-version:
     description: 'Version of PackChk'
     required: false
-    default: 1.3.95
+    default: 1.3.98
   gen-doc-script:
     description: 'Path to gen-doc script'
     required: false
@@ -68,7 +68,10 @@ runs:
       shell: bash
       run: |
         sudo apt-get update
-        sudo apt-get install --no-install-recommends -y libclang1-9 libclang-cpp1-9 p7zip libxml2-utils
+        sudo apt-get install --no-install-recommends -y p7zip libxml2-utils
+        if [[ "$(lsb_release -sc)" == "focal" ]]; then
+          sudo apt-get install --no-install-recommends -y libclang1-9 libclang-cpp1-9
+        fi
         sudo pip install LinkChecker
 
     - name: Cache Doxygen ${{ inputs.doxygen-version }}
@@ -97,8 +100,23 @@ runs:
     - name: Install PackChk ${{ inputs.packchk-version }}
       shell: bash
       run: |
-        wget https://github.com/Open-CMSIS-Pack/devtools/releases/download/tools%2Fpackchk%2F${{ inputs.packchk-version }}/packchk-${{ inputs.packchk-version }}-linux64.zip
-        unzip packchk-${{ inputs.packchk-version }}-linux64.zip
+        SUFFIX="-linux-amd64.tbz2"
+        if [[ "${{ inputs.packchk-version }}" =~ ^([0-9]+)\.([0-9]+)(\.([0-9]+))(-.+)?$ ]]; then
+            if [[ ${BASH_REMATCH[1]} == 1 && ${BASH_REMATCH[2]} == 3 ]]; then
+                if [ ${BASH_REMATCH[4]} -le 96 ]; then
+                    SUFFIX="-linux64.zip"
+                elif [ ${BASH_REMATCH[4]} -le 98 ]; then
+                    SUFFIX="-linux64-amd64.tbz2"
+                fi
+            fi
+        fi
+        ARCHIVE="packchk-${{ inputs.packchk-version }}${SUFFIX}"
+        wget https://github.com/Open-CMSIS-Pack/devtools/releases/download/tools%2Fpackchk%2F${{ inputs.packchk-version }}/${ARCHIVE}
+        if [[ "${ARCHIVE##*.}" == "zip" ]]; then
+          unzip ${ARCHIVE}
+        else
+          tar xf ${ARCHIVE}
+        fi
         sudo mv packchk /usr/local/bin
         which packchk
         packchk --version
