@@ -26,6 +26,7 @@ and pack archives:
     gen-pack-script: ./gen_pack.sh                          # skipped by default
     gen-pack-output: ./output                               # skipped by default
     gh-pages-branch: gh-pages                               # default
+    gh-pages-deploy: gh-pages.yml                           # default
 ```
 
 > **Attention for Windows users**
@@ -36,6 +37,9 @@ and pack archives:
 > on the Windows machine and commit the change:
 >
 > `git update-index --chmod=+x <script>`
+
+As a starting point you can use the [workflow template](workflows/pack.yml) and add it to your projects
+GitHub repository under `.github/workflows/`. For details about documentation handling, see [below](#publish-to-github-pages).
 
 ## Advanced usage
 
@@ -54,4 +58,40 @@ Publishing documentation to GitHub Pages is handled automatically via the settin
 
 - `gen-doc-script` for generating if required, leave empty to skip generation.
 - `doc-path` for archiving documentation, leave empty to skip archiving/publishing.
-- `gh-pages` for publishing to GitHub Pages, set to empty to skip publishing.
+- `gh-pages-branch` for publishing to GitHub Pages, set to empty to skip publishing.
+- `gh-pages-deploy` for trigger GitHub Pages deploy workflow, set to emtpy to skip.
+
+Once the settings are given, the workflow will commit the generated documentation from `doc-path`
+into a subfolder onto the `gh-pages-branch`. After pushing back the `gh-pages-deploy` is triggered
+to issue actual pages deployment. Check your repositories settings `Pages > Build and Deployment > Source`
+is set to `GitHub Action`.
+
+The repository needs to be prepared for GitHub Pages as the following:
+- Create orphaned `gh-pages` branch:
+  ```sh
+  # git checkout --orphan gh-pages
+  Switched to a new branch 'gh-pages'
+  # git reset
+  ```
+- Provide initial content taken from the [templates](workflows/):
+  - The [`.github/workflows/gh-pages.yml`](workflows/gh-pages.yml) deploy workflow.
+  - An [`index.html`](publish-doc/index.html) with front page or redirection to `latest`.
+  - The [`update_versions.sh`](publish-doc/update_versions.sh) shell script.
+    Assure execute flag is set. On Windows use `git update-index --chmod=+x <script>` to record the execte flag, properly.
+  - The [`versions.js.in`](publish-doc/version.js.in) JavaScript template.
+  - Some initial content e.g. for `main` branch in folder `main`.
+  - A `latest` symlink pointing to initial content folder.
+- Commit and push documentation branch:
+  ```sh
+  # git add .github index.html update_versions.sh versions.js.in main latest
+  # git commit -m "Initial contribution"
+  # git push origin gh-pages:gh-pages
+  ```
+- Switch back to `main` branch and add the [`.github/workflows/gh-pages.yml`](workflows/gh-pages.yml) deploy workflow there as well:
+  ```sh
+  # git checkout main
+  Switched to branch 'main'
+  # git add .github/workflows/gh-pages.yml
+  # git commit -m "Add GitHub Pages deploy workflow"
+  # git push
+  ```
