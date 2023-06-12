@@ -36,7 +36,6 @@ inputs:
     description: 'Workflow used for gh-pages deployment'
     required: false
     default: gh-pages.yml
-
 runs:
   using: "composite"
   steps:
@@ -164,9 +163,10 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
+        CMSIS_PACK_ROOT: "~/.cache/arm/packs"
       run: |
-        mkdir -p ~/.arm/Packs/.Web
-        wget -O ~/.arm/Packs/.Web/ARM.CMSIS.pdsc https://www.keil.com/pack/ARM.CMSIS.pdsc
+        mkdir -p ~/.cache/arm/packs/.Web
+        wget -O ~/.cache/packs/.Web/ARM.CMSIS.pdsc https://www.keil.com/pack/ARM.CMSIS.pdsc
         echo "::add-matcher::${{ github.action_path }}/packchk.json"
         ${{ inputs.gen-pack-script }}
         echo "::remove-matcher owner=packchk::"
