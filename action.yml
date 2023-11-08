@@ -17,7 +17,7 @@ inputs:
     description: 'Path to gen-doc script'
     required: false
   check-links-script:
-    description: 'Path to check-links script'
+    description: 'Path to check-links script [deprecated: include link checker into doc generation]'
     required: false
   doc-path:
     description: 'Path to documentation'
@@ -132,13 +132,17 @@ runs:
         GH_TOKEN: ${{ github.token }}
       run: |
         echo "::add-matcher::${{ github.action_path }}/doxygen.json"
+        echo "::add-matcher::${{ github.action_path }}/linkchecker.json"
         ${{ inputs.gen-doc-script }}
         echo "::remove-matcher owner=doxygen::"
+        echo "::remove-matcher owner=linkchecker::"
 
     - name: Run linkchecker
       if: inputs.check-links-script
       shell: bash
       run: |
+        echo "::warning:: check-links-script input of gen-pack-action is deprecated!"
+        echo "::warning:: Integrate link checker into gen-doc script instead."
         echo "::add-matcher::${{ github.action_path }}/linkchecker.json"
         ${{ inputs.check-links-script }}
         echo "::remove-matcher owner=linkchecker::"
