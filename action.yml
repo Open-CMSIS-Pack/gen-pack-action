@@ -212,7 +212,11 @@ runs:
         else
           MSG="branch"
         fi
-        ${{ github.action_path }}/publish-doc/update_versions.sh
+        if [ -x update_versions.sh ]; then
+          ./update_versions.sh
+        else
+          ${{ github.action_path }}/publish-doc/update_versions.sh
+        fi
         git config user.name github-actions
         git config user.email github-actions@github.com
         git add .
