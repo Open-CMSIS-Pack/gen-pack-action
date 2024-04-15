@@ -193,13 +193,30 @@ runs:
         tag: ${{ github.ref }}
         overwrite: true
 
-    - uses: actions/checkout@v3
+    - name: Check branch ${{ inputs.gh-pages-branch }}
       if: inputs.doc-path && inputs.gh-pages-branch && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+      id: check-gh-pages-branch
+      shell: bash
+      run: |
+        if git rev-parse --verify origin/${{ inputs.gh-pages-branch }} 1>/dev/null 2>&1; then
+          echo "RESULT=true" >> "${GITHUB_OUTPUT}"
+        else
+          echo "::error:: Git branch ${{ inputs.gh-pages-branch }} does not exist. Skipping documentation deployment!"
+          echo "::notice::Please create an orphaned target branch for the documentation deployment: "
+          echo "::notice:: > git checkout --orphan  ${{ inputs.gh-pages-branch }}"
+          echo "::notice:: > git rm -rf --cached ."
+          echo "::notice:: > git add .github/workflows/gh-pages.yml"
+          echo "::notice:: > git commit -m 'Initial gh-pages branch'"
+          echo "RESULT=false" >> "${GITHUB_OUTPUT}"
+        fi        
+
+    - uses: actions/checkout@v3
+      if: steps.check-gh-pages-branch.outputs.RESULT == 'true' && inputs.doc-path && inputs.gh-pages-branch && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
       with:
         ref: ${{ inputs.gh-pages-branch }}
 
     - name: Publish documentation
-      if: inputs.doc-path && inputs.gh-pages-branch && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+      if: steps.check-gh-pages-branch.outputs.RESULT == 'true' && inputs.doc-path && inputs.gh-pages-branch && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
       shell: bash
       run: |
         rm -rf ${GITHUB_REF_NAME}
@@ -224,12 +241,12 @@ runs:
         git push
 
     - uses: actions/checkout@v3
-      if: inputs.doc-path && inputs.gh-pages-branch && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+      if: steps.check-gh-pages-branch.outputs.RESULT == 'true' && inputs.doc-path && inputs.gh-pages-branch && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
       with:
         ref: ${{ github.ref }}
 
     - name: Trigger GH-Pages deployment
-      if: inputs.doc-path && inputs.gh-pages-branch && inputs.gh-pages-deploy && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+      if: steps.check-gh-pages-branch.outputs.RESULT == 'true' && inputs.doc-path && inputs.gh-pages-branch && inputs.gh-pages-deploy && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
