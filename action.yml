@@ -81,7 +81,7 @@ runs:
     - name: Cache Doxygen ${{ inputs.doxygen-version }}
       if: inputs.doxygen-version != 'none'
       id: cache-doxygen
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: /opt/doxygen-${{ inputs.doxygen-version }}
         key: doxygen-${{ inputs.doxygen-version }}-${{ runner.os }}
@@ -149,7 +149,7 @@ runs:
 
     - name: Archive documentation
       if: inputs.doc-path && github.event_name == 'pull_request'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: documentation
         path: ${{ inputs.doc-path }}
@@ -177,7 +177,7 @@ runs:
 
     - name: Archive pack
       if: inputs.gen-pack-output && github.event_name != 'release'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         path: ${{ inputs.gen-pack-output }}/*.pack
         retention-days: 1
@@ -210,7 +210,7 @@ runs:
           echo "RESULT=false" >> "${GITHUB_OUTPUT}"
         fi        
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       if: steps.check-gh-pages-branch.outputs.RESULT == 'true' && inputs.doc-path && inputs.gh-pages-branch && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
       with:
         ref: ${{ inputs.gh-pages-branch }}
@@ -240,7 +240,7 @@ runs:
         git commit -m "Update documentation for ${MSG} ${GITHUB_REF_NAME}"
         git push
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       if: steps.check-gh-pages-branch.outputs.RESULT == 'true' && inputs.doc-path && inputs.gh-pages-branch && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
       with:
         ref: ${{ github.ref }}
