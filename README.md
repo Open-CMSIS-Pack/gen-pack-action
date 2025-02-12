@@ -18,7 +18,7 @@ and pack archives:
 ```yaml
 - uses: Open-CMSIS-Pack/gen-pack-action@main
   with:
-    doxygen-version: 1.9.2                                  # default
+    doxygen-version: 1.9.6                                  # default
     packchk-version: 1.3.95                                 # default
     gen-doc-script: ./DoxyGen/gen_doc.sh                    # skipped by default
     check-links-script: ./Documentation/check_links.sh      # skipped by default
@@ -67,12 +67,15 @@ to issue actual pages deployment. Check your repositories settings `Pages > Buil
 is set to `GitHub Action`.
 
 The repository needs to be prepared for GitHub Pages as the following:
+
 - Create orphaned `gh-pages` branch:
+
   ```sh
   # git checkout --orphan gh-pages
   Switched to a new branch 'gh-pages'
   # git reset
   ```
+
 - Provide initial content taken from the [templates](workflows/):
   - The [`.github/workflows/gh-pages.yml`](workflows/gh-pages.yml) deploy workflow.
   - An [`index.html`](publish-doc/index.html) with front page or redirection to `latest`.
@@ -82,12 +85,15 @@ The repository needs to be prepared for GitHub Pages as the following:
   - Some initial content e.g. for `main` branch in folder `main`.
   - A `latest` symlink pointing to initial content folder.
 - Commit and push documentation branch:
+
   ```sh
   # git add .github index.html update_versions.sh versions.js.in main latest
   # git commit -m "Initial contribution"
   # git push origin gh-pages:gh-pages
   ```
+
 - Switch back to `main` branch and add the [`.github/workflows/gh-pages.yml`](workflows/gh-pages.yml) deploy workflow there as well:
+
   ```sh
   # git checkout main
   Switched to branch 'main'
