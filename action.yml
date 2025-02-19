@@ -182,6 +182,7 @@ runs:
       if: inputs.gen-pack-output && github.event_name != 'release'
       uses: actions/upload-artifact@v4
       with:
+        name: pack
         path: ${{ steps.paths.outputs.gen_pack_output }}/*.pack
         retention-days: 1
         if-no-files-found: error

@@ -30,6 +30,6 @@ jobs:
 
       - name: Verify artifacts
         run: |
-          ls -lah artifacts
-          test -f artifacts/*.pack || (echo "::error::pack artifact not found", exit 1)
+          test -f artifacts/pack/*.pack || (echo "::error::pack artifact not found", exit 1)
+          test -f artifacts/documentation/index.html || (echo "::error::documentation artifact not found", exit 1)
 
