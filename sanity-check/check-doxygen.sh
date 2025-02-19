@@ -21,7 +21,7 @@ echo "Simulating linkchecker warnings..."
 echo 'doc.txt:30:10;http://example.com;404;The requested URL was not found on this server.'
 
 echo "Creating output"
-mkdir -p ./Documentation/html
-touch ./Documentation/html/index.html
+mkdir -p Documentation/html
+touch Documentation/html/index.html
 
 exit 0

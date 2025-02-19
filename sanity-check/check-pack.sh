@@ -41,6 +41,6 @@ echo ''
 # Creating output
 
 mkdir -p output
-touch "Vendor.Pack.1.0.0.pack"
+touch "output/Vendor.Pack.1.0.0.pack"
 
 exit 0
