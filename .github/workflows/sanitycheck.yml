@@ -1,4 +1,4 @@
-name: Build pack
+name: Sanity check
 on:
   pull_request:
 
@@ -8,14 +8,12 @@ concurrency:
 
 jobs:
   pack:
-    name: Sanity check workflow action
+    name: Workflow action
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - uses: ./action.yml
+      - uses: ./
         with:
           working-directory: sanity-check
           doxygen-version: 1.9.6

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-PACKCHK=$(which pack)
+PACKCHK=$(which packchk)
 if [ -z "$PACKCHK" ]; then
   echo "::error::packchk not found"
   exit 1

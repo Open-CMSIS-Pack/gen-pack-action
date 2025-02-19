@@ -6,8 +6,7 @@ if [ -z "$DOXYGEN" ]; then
     exit 1
 fi
 
-echo "${DOXYGEN} --version"
-VERSION=$(${DOXYGEN} --version)
+VERSION=$(${DOXYGEN} --version | grep -oE '^[0-9.]+')
 if [[ "$VERSION" != "1.9.6" ]]; then
     echo "::error::doxygen version 1.9.6 expected, found $VERSION"
     exit 1
