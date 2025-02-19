@@ -23,7 +23,7 @@ and pack archives:
     doxygen-version: 1.9.6                                  # default
     packchk-version: 1.4.1                                  # default
     gen-doc-script: ./DoxyGen/gen_doc.sh                    # skipped by default
-    check-links-script: ./Documentation/check_links.sh      # skipped by default
+    check-links-script:                                     # deprecated
     doc-path: ./Documentation/html                          # skipped by default
     gen-pack-script: ./gen_pack.sh                          # skipped by default
     gen-pack-output: ./output                               # skipped by default

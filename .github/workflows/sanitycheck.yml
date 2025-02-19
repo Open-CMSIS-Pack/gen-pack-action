@@ -19,7 +19,6 @@ jobs:
           doxygen-version: 1.9.6
           packchk-version: 1.4.1
           gen-doc-script: ./check-doxygen.sh
-          check-links-script: ./check-links.sh
           doc-path: ./Documentation/html
           gen-pack-script: ./check-pack.sh
           gen-pack-output: ./output
