@@ -47,6 +47,15 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Join paths
+      id: paths
+      shell: bash
+      run: |
+        doc_path="$(realpath --relative-base=${{ github.workspace }} -m "${{ inputs.working-directory }}/${{ inputs.doc-path }}")"
+        echo "doc_path=${doc_path}" >> $GITHUB_OUTPUT
+        gen_pack_output="$(realpath --relative-base=${{ github.workspace }} -m "${{ inputs.working-directory }}/${{ inputs.gen-pack-output }}")"
+        echo "gen_pack_output=${gen_pack_output}" >> $GITHUB_OUTPUT
+
     - name: Update release description
       if: github.event_name == 'release'
       env:
@@ -173,7 +182,7 @@ runs:
       if: inputs.gen-pack-output && github.event_name != 'release'
       uses: actions/upload-artifact@v4
       with:
-        path: ${{ inputs.working-directory }}/${{ inputs.gen-pack-output }}/*.pack
+        path: ${{ steps.paths.outputs.gen_pack_output }}/*.pack
         retention-days: 1
         if-no-files-found: error
 
@@ -183,7 +192,7 @@ runs:
       with:
         repo_token: ${{ github.token }}
         file_glob: true
-        file: ${{ inputs.working-directory }}/${{ inputs.gen-pack-output }}/*.pack
+        file: ${{ steps.paths.outputs.gen_pack_output }}/*.pack
         tag: ${{ github.ref }}
         overwrite: true
 
@@ -203,7 +212,7 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: documentation
-        path: ${{ inputs.working-directory }}/${{ inputs.doc-path }}
+        path: ${{ steps.paths.outputs.doc_path }}
         retention-days: 1
         if-no-files-found: error
 
