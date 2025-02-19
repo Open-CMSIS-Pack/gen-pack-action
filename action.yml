@@ -12,7 +12,7 @@ inputs:
   packchk-version:
     description: 'Version of PackChk'
     required: false
-    default: 1.3.98
+    default: 1.4.1
   gen-doc-script:
     description: 'Path to gen-doc script'
     required: false
@@ -36,14 +36,32 @@ inputs:
     description: 'Workflow used for gh-pages deployment'
     required: false
     default: gh-pages.yml
+  working-directory:
+    description: 'Working directory, defaults to workspace'
+    required: false
+    default: ${{ github.workspace }}
+  cmsis-pack-root:
+    description: 'CMSIS Pack root directory'
+    required: false
+    default: /home/runner/.cache/arm/packs
 runs:
   using: "composite"
   steps:
+    - name: Join paths
+      id: paths
+      shell: bash
+      run: |
+        doc_path="$(realpath --relative-base=${{ github.workspace }} -m "${{ inputs.working-directory }}/${{ inputs.doc-path }}")"
+        echo "doc_path=${doc_path}" >> $GITHUB_OUTPUT
+        gen_pack_output="$(realpath --relative-base=${{ github.workspace }} -m "${{ inputs.working-directory }}/${{ inputs.gen-pack-output }}")"
+        echo "gen_pack_output=${gen_pack_output}" >> $GITHUB_OUTPUT
+
     - name: Update release description
       if: github.event_name == 'release'
       env:
         GH_TOKEN: ${{ github.token }}
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: |
         TYPE="$(git for-each-ref --format "%(objecttype)" ${GITHUB_REF})"
         CURRENT="$(gh release view ${GITHUB_REF_NAME} --json body -t "{{.body}}")"
@@ -57,6 +75,7 @@ runs:
       env:
         GH_TOKEN: ${{ github.token }}
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: |
         TYPE="$(git for-each-ref --format "%(objecttype)" ${GITHUB_REF})"
         DESC="$(gh release view ${GITHUB_REF_NAME} --json body -t "{{.body}}")"
@@ -125,6 +144,7 @@ runs:
     - name: Generate doxygen
       if: inputs.gen-doc-script
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
@@ -137,12 +157,16 @@ runs:
     - name: Generate pack
       if: inputs.gen-pack-script
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       env:
         GH_TOKEN: ${{ github.token }}
-        CMSIS_PACK_ROOT: /home/runner/.cache/arm/packs
+        CMSIS_PACK_ROOT: ${{ inputs.cmsis-pack-root }}
       run: |
-        mkdir -p ~/.cache/arm/packs/.Web
-        wget -O ~/.cache/arm/packs/.Web/ARM.CMSIS.pdsc https://www.keil.com/pack/ARM.CMSIS.pdsc
+        if [ -d "${CMSIS_PACK_ROOT}" ] && [ ! -w "${CMSIS_PACK_ROOT}" ]; then
+          chmod -R u+w "${CMSIS_PACK_ROOT}"
+        fi
+        mkdir -p "${CMSIS_PACK_ROOT}/.Web"
+        wget -O "${CMSIS_PACK_ROOT}/.Web/ARM.CMSIS.pdsc" https://www.keil.com/pack/ARM.CMSIS.pdsc
         
         echo "::add-matcher::${{ github.action_path }}/doxygen.json"
         echo "::add-matcher::${{ github.action_path }}/linkchecker.json"
@@ -158,7 +182,8 @@ runs:
       if: inputs.gen-pack-output && github.event_name != 'release'
       uses: actions/upload-artifact@v4
       with:
-        path: ${{ inputs.gen-pack-output }}/*.pack
+        name: pack
+        path: ${{ steps.paths.outputs.gen_pack_output }}/*.pack
         retention-days: 1
         if-no-files-found: error
 
@@ -168,13 +193,14 @@ runs:
       with:
         repo_token: ${{ github.token }}
         file_glob: true
-        file: ${{ inputs.gen-pack-output }}/*.pack
+        file: ${{ steps.paths.outputs.gen_pack_output }}/*.pack
         tag: ${{ github.ref }}
         overwrite: true
 
     - name: Run linkchecker
       if: inputs.check-links-script
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: |
         echo "::warning:: check-links-script input of gen-pack-action is deprecated!"
         echo "::warning:: Integrate link checker into gen-doc script instead."
@@ -187,13 +213,14 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: documentation
-        path: ${{ inputs.doc-path }}
+        path: ${{ steps.paths.outputs.doc_path }}
         retention-days: 1
         if-no-files-found: error
 
     - name: Archive documentation
       if: inputs.doc-path && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: |
         tar -cvjf /tmp/doc.tbz2 -C ${{ inputs.doc-path }} .
 
@@ -201,6 +228,7 @@ runs:
       if: inputs.doc-path && inputs.gh-pages-branch && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
       id: check-gh-pages-branch
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: |
         if git rev-parse --verify origin/${{ inputs.gh-pages-branch }} 1>/dev/null 2>&1; then
           echo "RESULT=true" >> "${GITHUB_OUTPUT}"
@@ -217,11 +245,13 @@ runs:
     - uses: actions/checkout@v4
       if: steps.check-gh-pages-branch.outputs.RESULT == 'true' && inputs.doc-path && inputs.gh-pages-branch && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
       with:
+        path: ${{ inputs.working-directory }}
         ref: ${{ inputs.gh-pages-branch }}
 
     - name: Publish documentation
       if: steps.check-gh-pages-branch.outputs.RESULT == 'true' && inputs.doc-path && inputs.gh-pages-branch && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: |
         rm -rf ${GITHUB_REF_NAME}
         mkdir -p ${GITHUB_REF_NAME}
@@ -247,11 +277,13 @@ runs:
     - uses: actions/checkout@v4
       if: steps.check-gh-pages-branch.outputs.RESULT == 'true' && inputs.doc-path && inputs.gh-pages-branch && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
       with:
+        path: ${{ inputs.working-directory }}
         ref: ${{ github.ref }}
 
     - name: Trigger GH-Pages deployment
       if: steps.check-gh-pages-branch.outputs.RESULT == 'true' && inputs.doc-path && inputs.gh-pages-branch && inputs.gh-pages-deploy && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
