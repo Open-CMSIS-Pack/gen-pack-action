@@ -1,0 +1,38 @@
+name: Build pack
+on:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pack:
+    name: Sanity check workflow action
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: ./action.yml
+        with:
+          working-directory: sanity-check
+          doxygen-version: 1.9.6
+          packchk-version: 1.4.1
+          gen-doc-script: ./check-doxygen.sh
+          check-links-script: ./check-links.sh
+          doc-path: ./Documentation/html
+          gen-pack-script: ./check-pack.sh
+          gen-pack-output: ./output
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Verify artifacts
+        run: |
+          ls -lah artifacts
+          test -f artifacts/*.pack || (echo "::error::pack artifact not found", exit 1)
+

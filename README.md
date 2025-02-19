@@ -18,8 +18,10 @@ and pack archives:
 ```yaml
 - uses: Open-CMSIS-Pack/gen-pack-action@main
   with:
+    working-directory: ${{ github.workspace }}              # default
+    cmsis-pack-root: /home/runner/.cache/arm/packs          # default 
     doxygen-version: 1.9.6                                  # default
-    packchk-version: 1.3.95                                 # default
+    packchk-version: 1.4.1                                  # default
     gen-doc-script: ./DoxyGen/gen_doc.sh                    # skipped by default
     check-links-script: ./Documentation/check_links.sh      # skipped by default
     doc-path: ./Documentation/html                          # skipped by default
