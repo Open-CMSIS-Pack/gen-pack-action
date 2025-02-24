@@ -87,12 +87,17 @@ runs:
           git push --force origin ${GITHUB_REF_NAME}:${GITHUB_REF_NAME}
         fi
 
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
     - name: Install packages
       shell: bash
       run: |
         sudo apt-get update
         sudo apt-get install --no-install-recommends -y p7zip libxml2-utils dos2unix
-        sudo pip install LinkChecker
+        pip install LinkChecker
 
     - name: Cache Doxygen ${{ inputs.doxygen-version }}
       if: inputs.doxygen-version != 'none'
@@ -167,11 +172,11 @@ runs:
         fi
         mkdir -p "${CMSIS_PACK_ROOT}/.Web"
         wget -O "${CMSIS_PACK_ROOT}/.Web/ARM.CMSIS.pdsc" https://www.keil.com/pack/ARM.CMSIS.pdsc
-        
+
         echo "::add-matcher::${{ github.action_path }}/doxygen.json"
         echo "::add-matcher::${{ github.action_path }}/linkchecker.json"
         echo "::add-matcher::${{ github.action_path }}/packchk.json"
-        
+
         ${{ inputs.gen-pack-script }}
 
         echo "::remove-matcher owner=packchk::"
@@ -240,7 +245,7 @@ runs:
           echo "::notice:: > git add .github/workflows/gh-pages.yml"
           echo "::notice:: > git commit -m 'Initial gh-pages branch'"
           echo "RESULT=false" >> "${GITHUB_OUTPUT}"
-        fi        
+        fi
 
     - uses: actions/checkout@v4
       if: steps.check-gh-pages-branch.outputs.RESULT == 'true' && inputs.doc-path && inputs.gh-pages-branch && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
