@@ -247,7 +247,7 @@ runs:
           echo "RESULT=false" >> "${GITHUB_OUTPUT}"
         fi
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       if: steps.check-gh-pages-branch.outputs.RESULT == 'true' && inputs.doc-path && inputs.gh-pages-branch && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
       with:
         path: ${{ inputs.working-directory }}
@@ -279,7 +279,7 @@ runs:
         git commit -m "Update documentation for ${MSG} ${GITHUB_REF_NAME}"
         git push
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       if: steps.check-gh-pages-branch.outputs.RESULT == 'true' && inputs.doc-path && inputs.gh-pages-branch && (github.event_name == 'release' || github.event_name == 'push' || github.event_name == 'workflow_dispatch')
       with:
         path: ${{ inputs.working-directory }}
