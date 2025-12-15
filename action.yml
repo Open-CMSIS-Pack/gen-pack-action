@@ -102,7 +102,7 @@ runs:
     - name: Cache Doxygen ${{ inputs.doxygen-version }}
       if: inputs.doxygen-version != 'none'
       id: cache-doxygen
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: /opt/doxygen-${{ inputs.doxygen-version }}
         key: doxygen-${{ inputs.doxygen-version }}-${{ runner.os }}
