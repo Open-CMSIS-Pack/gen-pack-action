@@ -1,3 +1,6 @@
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-green?label=Licence)](https://github.com/Open-CMSIS-Pack/gen-pack-action/blob/main/LICENSE)
+[![Sanity Check](https://img.shields.io/github/actions/workflow/status/Open-CMSIS-Pack/gen-pack-action/sanitycheck.yml?logo=arm&logoColor=0091bd&label=Sanity%20Check)](https://github.com/Open-CMSIS-Pack/gen-pack-action/tree/main/.github/workflows/sanitycheck.yml)
+
 # gen-pack-action
 
 GitHub workflow action to generate documentation and packs
