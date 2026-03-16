@@ -185,7 +185,7 @@ runs:
 
     - name: Archive pack
       if: inputs.gen-pack-output && github.event_name != 'release'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: pack
         path: ${{ steps.paths.outputs.gen_pack_output }}/*.pack
@@ -215,7 +215,7 @@ runs:
 
     - name: Archive documentation
       if: inputs.doc-path && github.event_name == 'pull_request'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: documentation
         path: ${{ steps.paths.outputs.doc_path }}
