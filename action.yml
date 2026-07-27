@@ -198,7 +198,7 @@ runs:
         archive: true
 
     - name: Deduce pack file name
-      id: pack-file-name 
+      id: pack-file-name
       if: inputs.gen-pack-output && github.event_name != 'release' && inputs.upload-non-zipped-pack != 'no'
       shell: bash
       run: |
