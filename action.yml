@@ -203,6 +203,10 @@ runs:
       shell: bash
       run: |
         pack_file="$(find "${{ steps.paths.outputs.gen_pack_output }}" -maxdepth 1 -type f -name '*.pack' -print -quit)"
+        if [ -z "${pack_file}" ]; then
+          echo "::error::No .pack file found in ${{ steps.paths.outputs.gen_pack_output }}"
+          exit 1
+        fi
         echo "pack_file_name=$(basename "${pack_file}")" >> "${GITHUB_OUTPUT}"
 
     - name: Archive pack (non-zipped)
