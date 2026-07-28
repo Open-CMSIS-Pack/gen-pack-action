@@ -32,7 +32,7 @@ and pack archives:
     gen-pack-output: ./output                               # skipped by default
     gh-pages-branch: gh-pages                               # default
     gh-pages-deploy: gh-pages.yml                           # default
-    upload-non-zipped-pack: both                            # default
+    pack-artifact-format: both                              # default: zip, pack, or both
 ```
 
 > **Attention for Windows users**

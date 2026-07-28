@@ -44,8 +44,8 @@ inputs:
     description: 'CMSIS Pack root directory'
     required: false
     default: /home/runner/.cache/arm/packs
-  upload-non-zipped-pack:
-    description: 'Store generated pack file as non-zipped artifact (yes, no, or both)'
+  pack-artifact-format:
+    description: 'Pack artifact format (zip, pack, or both)'
     required: false
     default: 'both'
 runs:
@@ -188,7 +188,7 @@ runs:
         echo "::remove-matcher owner=linkchecker::"
 
     - name: Archive pack (zipped)
-      if: inputs.gen-pack-output && github.event_name != 'release' && inputs.upload-non-zipped-pack != 'yes'
+      if: inputs.gen-pack-output && github.event_name != 'release' && inputs.pack-artifact-format != 'pack'
       uses: actions/upload-artifact@v7
       with:
         name: pack
@@ -199,7 +199,7 @@ runs:
 
     - name: Deduce pack file name
       id: pack-file-name
-      if: inputs.gen-pack-output && github.event_name != 'release' && inputs.upload-non-zipped-pack != 'no'
+      if: inputs.gen-pack-output && github.event_name != 'release' && inputs.pack-artifact-format != 'zip'
       shell: bash
       run: |
         pack_file="$(find "${{ steps.paths.outputs.gen_pack_output }}" -maxdepth 1 -type f -name '*.pack' -print -quit)"
@@ -210,7 +210,7 @@ runs:
         echo "pack_file_name=$(basename "${pack_file}")" >> "${GITHUB_OUTPUT}"
 
     - name: Archive pack (non-zipped)
-      if: steps.pack-file-name.outputs.pack_file_name && github.event_name != 'release' && inputs.upload-non-zipped-pack != 'no'
+      if: steps.pack-file-name.outputs.pack_file_name && github.event_name != 'release' && inputs.pack-artifact-format != 'zip'
       uses: actions/upload-artifact@v7
       with:
         name: ${{ steps.pack-file-name.outputs.pack_file_name }}

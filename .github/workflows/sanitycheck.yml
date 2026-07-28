@@ -22,7 +22,7 @@ jobs:
           doc-path: ./Documentation/html
           gen-pack-script: ./check-pack.sh
           gen-pack-output: ./output
-          upload-non-zipped-pack: both
+          pack-artifact-format: both
 
       - name: Download artifacts
         uses: actions/download-artifact@v8
