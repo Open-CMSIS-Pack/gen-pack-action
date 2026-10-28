@@ -1,16 +1,22 @@
 #!/usr/bin/env bash
 
-DOXYGEN=$(which doxygen)
-if [ -z "$DOXYGEN" ]; then
-    echo "::error::doxygen not found"
-    exit 1
-fi
+REQ_DXY_VERSION="1.9.6"
 
-DOXYGEN_VERSION=$(${DOXYGEN} --version | grep -oE '^[0-9.]+')
-if [[ "$DOXYGEN_VERSION" != "1.9.6" ]]; then
-    echo "::error::doxygen version 1.9.6 expected, found $DOXYGEN_VERSION"
-    exit 1
-fi
+find_doxygen() {
+    DOXYGEN=$(which doxygen)
+    if [ -z "$DOXYGEN" ]; then
+        echo "::error::doxygen not found"
+        exit 1
+    fi
+
+    DOXYGEN_VERSION=$(${DOXYGEN} --version | grep -oE '^[0-9.]+')
+    if [[ "$DOXYGEN_VERSION" != "$1" ]]; then
+        echo "::error::doxygen version $1 expected, found $DOXYGEN_VERSION"
+        exit 1
+    fi
+}
+
+find_doxygen "${REQ_DXY_VERSION}"
 
 LINKCHECKER=$(which linkchecker)
 if [ -z "$LINKCHECKER" ]; then
