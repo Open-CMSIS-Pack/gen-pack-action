@@ -40,6 +40,10 @@ def scan_line(line, quote, heredocs):
             quote = character
         elif character == "#" and (position == 0 or line[position - 1] in " \t;|&()"):
             break
+        elif line.startswith("<<<", position):
+            # Here-strings have no delimiter or following body to skip.
+            position += 3
+            continue
         elif line.startswith("<<", position):
             position = read_heredoc(line, position, heredocs)
             continue
@@ -115,6 +119,8 @@ def required_version(script):
         if assignment:
             name, expression = assignment.groups()
             assignments.setdefault(name, []).append(expression)
+            continue
+        if re.match(r"find_doxygen\s*\(\s*\)", statement):
             continue
         if not re.match(r"find_doxygen(?:\s|$)", statement):
             continue

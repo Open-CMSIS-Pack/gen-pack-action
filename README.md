@@ -127,3 +127,13 @@ The repository needs to be prepared for GitHub Pages as the following:
   # git commit -m "Add GitHub Pages deploy workflow"
   # git push
   ```
+
+## Running tests
+
+Install the test dependencies and run the resolver tests from the repository root:
+
+```sh
+python -m venv .venv
+pip install -r tests/requirements.txt
+pytest tests -v
+```
