@@ -92,10 +92,54 @@ def test_comments_and_unrelated_commands_are_ignored(resolve):
     assert output == "version=1.9.6\n"
 
 
-def test_line_continuation_and_crlf(resolve):
-    process, output = resolve('REQ="1.9.6"\r\nfind_doxygen \\\r\n "$REQ"\r\n')
+@pytest.mark.parametrize(
+    "source",
+    [
+        pytest.param('REQ="1.9.6"\r\nfind_doxygen \\\r\n "$REQ"\r\n', id="crlf"),
+        pytest.param('find_doxygen 1.9.\\\n6\n', id="unquoted-version"),
+        pytest.param('find_doxygen "1.9.\\\n6"\n', id="double-quoted-version"),
+        pytest.param('REQ="1.9.\\\n6"\nfind_doxygen "$REQ"\n', id="assignment"),
+        pytest.param('find_\\\ndoxygen "1.9.6"\n', id="command-name"),
+    ],
+)
+def test_line_continuation_and_crlf(resolve, source):
+    process, output = resolve(source)
     assert process.returncode == 0, process.stderr
     assert output == "version=1.9.6\n"
+
+
+@pytest.mark.parametrize("comment", ["# explanation", ": # explanation"])
+@pytest.mark.parametrize(
+    "requirement",
+    [
+        pytest.param('find_doxygen "1.17.0"\n', id="direct-call"),
+        pytest.param('REQ="1.17.0"\nfind_doxygen "$REQ"\n', id="assignment"),
+    ],
+)
+def test_comment_backslashes_do_not_hide_requirements(resolve, comment, requirement):
+    process, output = resolve(f"{comment} \\\n" + requirement)
+    assert process.returncode == 0, process.stderr
+    assert output == "version=1.17.0\n"
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        pytest.param("find_doxygen '1.17.\\\n0'\n", id="direct-call"),
+        pytest.param("REQ='1.17.\\\n0'\nfind_doxygen \"$REQ\"\n", id="assignment"),
+    ],
+)
+def test_single_quoted_continuations_are_not_numeric_versions(resolve, source):
+    process, output = resolve(source)
+    assert process.returncode != 0
+    assert "::error::Unable to resolve Doxygen version:" in process.stderr
+    assert output == ""
+
+
+def test_escaped_backslashes_do_not_continue_lines(resolve):
+    process, output = resolve('echo ignored \\\\\nfind_doxygen "1.17.0"\n')
+    assert process.returncode == 0, process.stderr
+    assert output == "version=1.17.0\n"
 
 
 @pytest.mark.parametrize(
@@ -116,6 +160,78 @@ def test_multiline_strings_and_heredocs_do_not_supply_requirements(resolve, sour
     process, output = resolve(source + 'find_doxygen "1.17.0"\n')
     assert process.returncode == 0, process.stderr
     assert output == "version=1.17.0\n"
+
+
+@pytest.mark.parametrize(
+    "word, delimiter",
+    [
+        pytest.param("END-HELP", "END-HELP", id="hyphenated"),
+        pytest.param("123", "123", id="numeric"),
+        pytest.param(r"\EOF", "EOF", id="escaped"),
+        pytest.param('E"OF"', "EOF", id="partly-double-quoted"),
+        pytest.param("E'OF'", "EOF", id="partly-single-quoted"),
+        pytest.param("''", "", id="empty-single-quoted"),
+        pytest.param('""', "", id="empty-double-quoted"),
+        pytest.param(r'"END\-HELP"', r"END\-HELP", id="literal-backslash-in-double-quotes"),
+        pytest.param(r'"END\$HELP"', "END$HELP", id="escaped-dollar-in-double-quotes"),
+        pytest.param("EO\\\nF", "EOF", id="continued-delimiter"),
+        pytest.param("\\\n EOF", "EOF", id="continuation-before-delimiter"),
+        pytest.param("123>/dev/null", "123", id="adjacent-redirection"),
+    ],
+)
+@pytest.mark.parametrize("following_call", [False, True], ids=["body-only", "real-call"])
+def test_complete_heredoc_delimiters_hide_only_their_bodies(resolve, word, delimiter, following_call):
+    source = f"cat <<{word}\nfind_doxygen 9.9.9\n{delimiter}\n"
+    if following_call:
+        source += 'find_doxygen "1.17.0"\n'
+
+    process, output = resolve(source)
+
+    if following_call:
+        assert process.returncode == 0, process.stderr
+        assert output == "version=1.17.0\n"
+    else:
+        assert process.returncode != 0
+        assert "no standalone find_doxygen version requirement found" in process.stderr
+        assert output == ""
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        pytest.param("cat <<'EOF'\ncontinued \\\nEOF\n", id="quoted-body"),
+        pytest.param(
+            "cat <<EOF\ncontinued \\\nEOF\nfind_doxygen 9.9.9\nEOF\n", id="unquoted-body"),
+        pytest.param("cat <<EOF\nEO\\\nF\n", id="continued-end-delimiter"),
+        pytest.param(
+            "cat <<'EOF'\nEO\\\nF\nfind_doxygen 9.9.9\nEOF\n", id="quoted-end-delimiter"),
+        pytest.param(
+            "cat <<123 <<-'END-HELP'\nfind_doxygen 9.9.9\n123\n"
+            "\tfind_doxygen 9.9.8\n\tEND-HELP\n", id="multiple-bodies"),
+    ],
+)
+def test_heredoc_continuations_respect_delimiter_quoting(resolve, source):
+    process, output = resolve(source + 'find_doxygen "1.17.0"\n')
+    assert process.returncode == 0, process.stderr
+    assert output == "version=1.17.0\n"
+
+
+@pytest.mark.parametrize(
+    "expression",
+    ["((bits = 1 << 2))", "bits=$((1 << 2))"],
+    ids=["arithmetic-command", "arithmetic-expansion"],
+)
+def test_arithmetic_shifts_are_not_heredocs(resolve, expression):
+    process, output = resolve(expression + '\nfind_doxygen "1.17.0"\n')
+    assert process.returncode == 0, process.stderr
+    assert output == "version=1.17.0\n"
+
+
+def test_errors_after_continuations_report_physical_line_numbers(resolve):
+    process, output = resolve('echo ignored \\\n continuation\nfind_doxygen dynamic\n')
+    assert process.returncode != 0
+    assert "gen_doc.sh:3:" in process.stderr
+    assert output == ""
 
 
 @pytest.mark.parametrize(

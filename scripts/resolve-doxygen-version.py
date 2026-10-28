@@ -7,69 +7,13 @@ import re
 import shlex
 import sys
 
+from shell_script import script_lines
+
 
 VERSION = re.compile(r"[0-9]+(?:\.[0-9]+)+")
 VARIABLE = re.compile(r"\$(?:\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))")
 ASSIGNMENT = re.compile(r"(?:export\s+|readonly\s+)?([A-Za-z_][A-Za-z0-9_]*)=(.*)")
 ARGUMENT = re.compile(r'''("[^"\n]*"|'[^'\n]*'|[^\s'";]+)(?:[ \t]+\#.*)?''')
-HEREDOC = re.compile(r'''<<(-?)[ \t]*(?:"([^"]+)"|'([^']+)'|([A-Za-z_][A-Za-z0-9_]*))''')
-
-
-def read_heredoc(line, position, heredocs):
-    """Queue a here-document delimiter and return the next character position."""
-    match = HEREDOC.match(line, position)
-    if not match:
-        return position + 1
-    strip_tabs, double_quoted, single_quoted, bare = match.groups()
-    heredocs.append((double_quoted or single_quoted or bare, bool(strip_tabs)))
-    return match.end()
-
-
-def scan_line(line, quote, heredocs):
-    """Track quotes and queue here-documents outside quoted or commented text."""
-    position = 0
-    while position < len(line):
-        character = line[position]
-        if character == "\\" and quote != "'":
-            position += 2
-            continue
-        if quote:
-            if character == quote:
-                quote = None
-        elif character in "\"'`":
-            quote = character
-        elif character == "#" and (position == 0 or line[position - 1] in " \t;|&()"):
-            break
-        elif line.startswith("<<<", position):
-            # Here-strings have no delimiter or following body to skip.
-            position += 3
-            continue
-        elif line.startswith("<<", position):
-            position = read_heredoc(line, position, heredocs)
-            continue
-        position += 1
-    return quote
-
-
-def consume_heredoc(line, heredocs):
-    """Discard a here-document body line, removing its delimiter when reached."""
-    delimiter, strip_tabs = heredocs[0]
-    candidate = line.lstrip("\t") if strip_tabs else line
-    if candidate == delimiter:
-        heredocs.pop(0)
-
-
-def script_lines(source):
-    """Skip literal text in multiline quotes and here-documents when scanning commands."""
-    quote = None
-    heredocs = []
-    for number, line in enumerate(source.splitlines(), start=1):
-        if heredocs:
-            consume_heredoc(line, heredocs)
-            continue
-        if quote is None:
-            yield number, line
-        quote = scan_line(line, quote, heredocs)
 
 
 def read_argument(expression):
@@ -112,7 +56,7 @@ def required_version(script):
     """Read standalone find_doxygen calls and their preceding literal assignments."""
     assignments = {}
     versions = set()
-    source = script.read_text(encoding="utf-8").replace("\\\n", "")
+    source = script.read_text(encoding="utf-8")
     for number, line in script_lines(source):
         statement = line.strip()
         assignment = ASSIGNMENT.fullmatch(statement)
