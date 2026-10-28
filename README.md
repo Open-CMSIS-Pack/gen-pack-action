@@ -53,10 +53,30 @@ GitHub repository under `.github/workflows/`. For details about documentation ha
 
 If Doxygen is not required one can skip download and installation by setting `doxygen-version: none`.
 
+Set `doxygen-version: auto` to read the required version from the existing
+`gen-doc-script` input instead of maintaining the version in both places:
+
+```yaml
+- uses: Open-CMSIS-Pack/gen-pack-action@main
+  with:
+    doxygen-version: auto
+    gen-doc-script: ./CMSIS/Documentation/Doxygen/gen_doc.sh
+```
+
+The script must contain a standalone `find_doxygen` call with a numeric version,
+either directly (`find_doxygen "1.17.0"`) or through a Bash variable:
+
+```bash
+REQ_DXY_VERSION="1.17.0"
+find_doxygen "${REQ_DXY_VERSION}"
+```
+
+To allow version auto-detection to work.
+
 The URL Doxygen is downloaded from can be overwritten with the action input parameter
 `doxygen-url` which defaults to
 `https://sourceforge.net/projects/doxygen/files/rel-{VERSION}/doxygen-{VERSION}.linux.bin.tar.gz/download`.
-The `{VERSION}` pattern is substituted with the value provided in `doxygen-version`.
+The `{VERSION}` pattern is substituted with the resolved Doxygen version.
 
 ### Publish to GitHub Pages
 

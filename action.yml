@@ -2,7 +2,7 @@ name: 'gen-pack'
 description: 'Generate Open-CMSIS-Pack documentation and pack'
 inputs:
   doxygen-version:
-    description: 'Version of Doxygen'
+    description: 'Version of Doxygen, auto to detect from gen-doc-script, or none to skip installation'
     required: false
     default: 1.9.6
   doxygen-url:
@@ -51,6 +51,20 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Setup Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: '3.x'
+
+    - name: Resolve Doxygen version
+      id: doxygen-version
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        DOXYGEN_VERSION: ${{ inputs.doxygen-version }}
+        GEN_DOC_SCRIPT: ${{ inputs.gen-doc-script }}
+      run: python "${{ github.action_path }}/scripts/resolve-doxygen-version.py"
+
     - name: Join paths
       id: paths
       shell: bash
@@ -91,11 +105,6 @@ runs:
           git push --force origin ${GITHUB_REF_NAME}:${GITHUB_REF_NAME}
         fi
 
-    - name: Setup Python
-      uses: actions/setup-python@v7
-      with:
-        python-version: '3.x'
-
     - name: Install packages
       shell: bash
       run: |
@@ -103,26 +112,32 @@ runs:
         sudo apt-get install --no-install-recommends -y p7zip libxml2-utils dos2unix
         pip install LinkChecker
 
-    - name: Cache Doxygen ${{ inputs.doxygen-version }}
-      if: inputs.doxygen-version != 'none'
+    - name: Cache Doxygen ${{ steps.doxygen-version.outputs.version }}
+      if: steps.doxygen-version.outputs.version != 'none'
       id: cache-doxygen
       uses: actions/cache@v6
       with:
-        path: /opt/doxygen-${{ inputs.doxygen-version }}
-        key: doxygen-${{ inputs.doxygen-version }}-${{ runner.os }}
+        path: /opt/doxygen-${{ steps.doxygen-version.outputs.version }}
+        key: doxygen-${{ steps.doxygen-version.outputs.version }}-${{ runner.os }}
 
-    - name: Download Doxygen ${{ inputs.doxygen-version }}
-      if: inputs.doxygen-version != 'none' && steps.cache-doxygen.outputs.cache-hit != 'true'
+    - name: Download Doxygen ${{ steps.doxygen-version.outputs.version }}
+      if: steps.doxygen-version.outputs.version != 'none' && steps.cache-doxygen.outputs.cache-hit != 'true'
       shell: bash
+      env:
+        DOXYGEN_VERSION: ${{ steps.doxygen-version.outputs.version }}
+        DOXYGEN_URL: ${{ inputs.doxygen-url }}
       run: |
-        wget -O doxygen.tgz $(sed -e 's/{VERSION}/${{ inputs.doxygen-version }}/g' <<< ${{ inputs.doxygen-url }})
+        url="${DOXYGEN_URL//\{VERSION\}/${DOXYGEN_VERSION}}"
+        wget -O doxygen.tgz "${url}"
         sudo tar -C /opt -xf doxygen.tgz
 
-    - name: Install Doxygen ${{ inputs.doxygen-version }}
-      if: inputs.doxygen-version != 'none'
+    - name: Install Doxygen ${{ steps.doxygen-version.outputs.version }}
+      if: steps.doxygen-version.outputs.version != 'none'
       shell: bash
+      env:
+        DOXYGEN_VERSION: ${{ steps.doxygen-version.outputs.version }}
       run: |
-        sudo ln -s /opt/doxygen-${{ inputs.doxygen-version }}/bin/doxygen /usr/local/bin/
+        sudo ln -s "/opt/doxygen-${DOXYGEN_VERSION}/bin/doxygen" /usr/local/bin/
         which doxygen
         doxygen --version
 

@@ -6,17 +6,38 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
+  version-resolution:
+    name: Doxygen version resolution
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+
+      - run: python -m unittest discover -s tests -v
+
   pack:
     name: Workflow action
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          
       - uses: ./
         with:
           working-directory: sanity-check
-          doxygen-version: 1.9.6
+          doxygen-version: auto
           packchk-version: 1.4.1
           gen-doc-script: ./check-doxygen.sh
           doc-path: ./Documentation/html
